@@ -36,48 +36,41 @@ const AttachmentsColumn = React.createClass({
 
 const ArtGallery = React.createClass({
     propTypes: {
-        artists: React.PropTypes.array,
+        services: React.PropTypes.array,
         updateOnDisplay: React.PropTypes.func,
     },
     _toggleOnDisplay(gridRow, event) {
-        const artistId = gridRow.props.data.artist_id;
-        this.props.updateOnDisplay(artistId, !gridRow.props.data.on_display);
+        const serviceId = gridRow.props.data.service_id;
+        this.props.updateOnDisplay(serviceId, !gridRow.props.data.on_display);
     },
     _renderArtistsIfLoaded() {
-        if (this.props.artists) {
+        if (this.props.services) {
             const columnMetadata = [
                 {
                     columnName: "name",
-                    displayName: "Artist name",
-                    cssClassName: "artistNameColumn",
+                    displayName: "Service Name",
+                    cssClassName: "serviceNameColumn",
                     visible: true,
                     order: 0,
                 },
                 {
-                    columnName: "on_display",
-                    displayName: "On Display?",
+                    columnName: "location",
+                    displayName: "Location",
                     customComponent: CheckboxColumn,
                     cssClassName: "onDisplayColumn",
                     visible: true,
                     order: 1,
                 },
                 {
-                    columnName: "attachments",
-                    displayName: "Artwork",
-                    visible: true,
-                    customComponent: AttachmentsColumn,
-                    order: 2,
-                },
-                {
-                    columnName: "artist_id",
+                    columnName: "service_id",
                     displayName: "id",
                     visible: false,
                     order: 3,
                 },
             ];
             // Only need the columns due to a bug in griddle https://github.com/GriddleGriddle/Griddle/issues/114
-            const columns = ["name", "on_display", "attachments"];
-            return <Griddle onRowClick={this._toggleOnDisplay} results={this.props.artists} showFilter={true} showSettings={true} columnMetadata={columnMetadata} columns={columns} resultsPerPage={10} />;
+            const columns = ["name", "location"];
+            return <Griddle onRowClick={this._toggleOnDisplay} results={this.props.services} showFilter={true} showSettings={true} columnMetadata={columnMetadata} columns={columns} resultsPerPage={10} />;
         } else {
             return <div> Loading </div>;
         }
@@ -85,7 +78,7 @@ const ArtGallery = React.createClass({
     render() {
         return (
             <ReactBootstrap.Panel>
-                <h1>Art gallery</h1>
+                <h1>Available Services</h1>
                 <ReactBootstrap.Grid fluid={true}>
                     <ReactBootstrap.Row className="show-grid">
                         <ReactBootstrap.Col xs={0} md={0} lg={2}>
@@ -106,20 +99,21 @@ const ArtGalleryApp = React.createClass({
     },
     getInitialState() {
         return {
-            artists: null,
+            services: null,
         };
     },
     componentDidMount() {
         this._loadArtists();
     },
     _loadArtists() {
-        $.ajax('/v0/artists').then((response, status, jqXHR) => {
+        $.ajax('/v0/services').then((response, status, jqXHR) => {
+            console.log(response);
             this.setState({
-                artists: response.artists,
+                services: response.services,
             });
         });
     },
-    _updateOnDisplay(artistId, isOnDisplay) {
+    _updateOnDisplay(serviceId, isOnDisplay) {
         $.ajax('/v0/set_on_display', {
             method: 'POST',
             data: {
@@ -127,22 +121,22 @@ const ArtGalleryApp = React.createClass({
                 on_display: isOnDisplay,
             },
         }).then((response, status, jqXHR) => {
-            const updatedArtists = response.artist;
-            const newArtists = _.map(this.state.artists, artist => {
-                if (artist.artist_id === artistId) {
-                    return _.extend({}, artist, updatedArtists);
+            const updatedArtists = response.services;
+            const newArtists = _.map(this.state.services, service => {
+                if (service.service_id === serviceId) {
+                    return _.extend({}, service, updatedArtists);
                 } else {
-                    return artist;
+                    return service;
                 }
             });
             this.setState({
-                artists: newArtists,
+                services: newArtists,
             });
         });
     },
     render() {
         return (
-            <ArtGallery artists={this.state.artists} updateOnDisplay={this._updateOnDisplay}/>
+            <ArtGallery services={this.state.services} updateOnDisplay={this._updateOnDisplay}/>
         );
     },
 });
