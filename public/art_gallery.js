@@ -9,6 +9,24 @@ const customColumnProps = {
     metadata: React.PropTypes.object.required,
 };
 
+const DisplayLocationName = React.createClass({
+    propTypes: customColumnProps,
+    render() {
+        const columnName = this.props.metadata.columnName;
+        const locationId = this.props.rowData[columnName];
+        //console.log(this.props);
+        //const location = this.props.locations.find(locationId);
+        const locationName = _.map(locationId, location =>{
+            return <p key={locationId}>{locationId}</p>;
+        });
+        if (locationName) {
+            return <div>{locationName}</div>;
+        } else {
+            return <div />;
+        }
+    },
+});
+
 const CheckboxColumn  = React.createClass({
     propTypes: customColumnProps,
     render() {
@@ -37,6 +55,8 @@ const AttachmentsColumn = React.createClass({
 const ArtGallery = React.createClass({
     propTypes: {
         services: React.PropTypes.array,
+        locations: React.PropTypes.array,
+        organizations: React.PropTypes.array,
         updateOnDisplay: React.PropTypes.func,
     },
     _toggleOnDisplay(gridRow, event) {
@@ -54,12 +74,19 @@ const ArtGallery = React.createClass({
                     order: 0,
                 },
                 {
-                    columnName: "location",
-                    displayName: "Location",
-                    customComponent: CheckboxColumn,
-                    cssClassName: "onDisplayColumn",
+                    columnName:"description",
+                    displayName:"Program Description",
+                    cssClassName:"serviceDescriptionColumn",
                     visible: true,
                     order: 1,
+                },
+                {
+                    columnName: "location",
+                    displayName: "Location",
+                    cssClassName: "locationColumn",
+                    customComponent: DisplayLocationName,
+                    visible: true,
+                    order: 2,
                 },
                 {
                     columnName: "service_id",
@@ -69,7 +96,7 @@ const ArtGallery = React.createClass({
                 },
             ];
             // Only need the columns due to a bug in griddle https://github.com/GriddleGriddle/Griddle/issues/114
-            const columns = ["name", "location"];
+            const columns = ["name", "description", "location"];
             return <Griddle onRowClick={this._toggleOnDisplay} results={this.props.services} showFilter={true} showSettings={true} columnMetadata={columnMetadata} columns={columns} resultsPerPage={10} />;
         } else {
             return <div> Loading </div>;
@@ -100,6 +127,7 @@ const ArtGalleryApp = React.createClass({
     getInitialState() {
         return {
             services: null,
+            locations: null,
         };
     },
     componentDidMount() {
@@ -107,11 +135,30 @@ const ArtGalleryApp = React.createClass({
     },
     _loadArtists() {
         $.ajax('/v0/services').then((response, status, jqXHR) => {
-            console.log(response);
+            
             this.setState({
-                services: response.services,
-            });
+                services: response.services
+            })
+
+            this._updateLocationInfo(response.services, response.locations);
+            
         });
+    },
+    _updateLocationInfo(services, locations) {
+
+
+        for (var i=0; i<services.length; i++) {
+            var locationId = services[i].location,
+                obj = _.find(locations, function (obj) { return obj.location_id === locationId; });
+            services[i].setState({
+                location: obj
+            })
+        } 
+
+        console.log(services);
+
+        
+
     },
     _updateOnDisplay(serviceId, isOnDisplay) {
         $.ajax('/v0/set_on_display', {
@@ -136,7 +183,7 @@ const ArtGalleryApp = React.createClass({
     },
     render() {
         return (
-            <ArtGallery services={this.state.services} updateOnDisplay={this._updateOnDisplay}/>
+            <ArtGallery services={this.state.services} locations={this.state.locations} updateOnDisplay={this._updateLocationOnDisplay}/>
         );
     },
 });
