@@ -84,7 +84,7 @@ const ArtGallery = React.createClass({
                     columnName: "location",
                     displayName: "Location",
                     cssClassName: "locationColumn",
-                    customComponent: DisplayLocationName,
+                    
                     visible: true,
                     order: 2,
                 },
@@ -137,10 +137,11 @@ const ArtGalleryApp = React.createClass({
         $.ajax('/v0/services').then((response, status, jqXHR) => {
             
             this.setState({
-                services: response.services
+                services: response.services,
+                locations: response.locations
             })
 
-            this._updateLocationInfo(response.services, response.locations);
+            console.log(response);
             
         });
     },

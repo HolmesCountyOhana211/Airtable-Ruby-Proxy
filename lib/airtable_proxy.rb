@@ -11,13 +11,13 @@ services_table = airtable_client.table(open_referral_base_id, 'services')
 locations_table = airtable_client.table(open_referral_base_id,'locations')
 organizations_table = airtable_client.table(open_referral_base_id,'organizations')
 
-def service_to_dict(service)
+def service_to_dict(service, locations)
   {
     service_id: service.id,
     name: service['name'],
     description: service['description'],
     organization: service['organization'][0],
-    location: service['locations'][0],
+    location: locations[service['locations'][0]],
   }
 end
 
@@ -41,21 +41,16 @@ def organization_to_dict(organization)
   }
 end
 
-def find_location(location_id)
-  {
-    location: locations_table.find(location_id).map {|location| location_to_dict(location)}
-  }
-end
-
 get '/' do
   redirect to('/services.html')
 end
 
 get '/v0/services' do
+  locations = locations_table.all.map {|location| [location.id, location.name]}.to_h
   content_type :json
   {
-    services: services_table.all.map {|service| service_to_dict(service)},
-    locations: locations_table.all.map {|location| location_to_dict(location)}
+    services: services_table.all.map {|service| service_to_dict(service, locations)},
+    #locations: locations_table.all.map {|location| location_to_dict(location)}
   }.to_json
 end
 
